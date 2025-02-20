@@ -8,7 +8,7 @@ import os.log
 import Security
 
 //log stream --info --predicate 'subsystem == "<app.bundle.id>"'
-//log stream --info --predicate 'subsystem == "<app.bundle.id>" AND category == "saveCredentials"'
+//log stream --info --predicate 'subsystem == "<app.bundle.id>" AND category == "retrieveCredentials"'
 
 @MainActor let kSecAttrAccountString          = NSString(format: kSecAttrAccount)
 @MainActor let kSecValueDataString            = NSString(format: kSecValueData)
