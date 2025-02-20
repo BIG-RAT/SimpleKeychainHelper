@@ -17,9 +17,9 @@ let prefix                         = Bundle.main.infoDictionary?["CFBundleExecut
 @MainActor var sharedPrefix                   = ""
 @MainActor var accessGroup                    = ""
 
-public struct JPCredentials {
+public struct MySimpleKeychainHelper {
     
-    @MainActor public static let shared = JPCredentials()
+    @MainActor public static let shared = MySimpleKeychainHelper()
     @MainActor public init() {
             let teamId = fetchTeamId()
             Logger.teamId.info("found team id: \(teamId, privacy: .public)")
