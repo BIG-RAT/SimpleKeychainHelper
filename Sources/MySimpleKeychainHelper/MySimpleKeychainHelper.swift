@@ -129,12 +129,12 @@ public struct MySimpleKeychainHelper {
             theService = "apiClient-" + theService
         }
         
-        let keychainItemName = await sharedPrefix + "-" + theService
+        let keychainItemName = sharedPrefix + "-" + theService
         
         Logger.retrieveCredentials.info("keychainItemName: \(keychainItemName, privacy: .public)")
 
         // look for common keychain item
-        keychainResult = await itemLookup(service: keychainItemName)
+        keychainResult = itemLookup(service: keychainItemName)
         
         if keychainResult.count > 1 && !account.isEmpty {
             
