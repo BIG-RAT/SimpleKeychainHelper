@@ -13,7 +13,7 @@ import Security
 @MainActor let kSecAttrAccountString          = NSString(format: kSecAttrAccount)
 @MainActor let kSecValueDataString            = NSString(format: kSecValueData)
 @MainActor let kSecClassGenericPasswordString = NSString(format: kSecClassGenericPassword)
-let prefix                         = Bundle.main.infoDictionary?["CFBundleExecutable"] as? String ?? "unknown"
+let prefix                                    = Bundle.main.infoDictionary?["CFBundleExecutable"] as? String ?? "unknown"
 @MainActor var sharedPrefix                   = ""
 @MainActor var accessGroup                    = ""
 
