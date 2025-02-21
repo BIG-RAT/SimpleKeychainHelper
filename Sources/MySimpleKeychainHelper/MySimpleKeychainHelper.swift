@@ -46,8 +46,7 @@ public struct MySimpleKeychainHelper {
                     theService = "apiClient-" + theService
                 }
                 
-                // let keychainItemName = sharedPrefix + "-" + theService
-                let keychainItemName = "JPMA-\(theService)"
+                let keychainItemName = sharedPrefix + "-" + theService
                 
                 Logger.saveCredentials.info("theService: \(theService, privacy: .public)")
                 Logger.saveCredentials.info("keychain item \(keychainItemName, privacy: .public) for account \(account, privacy: .public)")
