@@ -21,7 +21,8 @@ let package = Package(
             path: "Sources/MySimpleKeychainHelper"),
         .testTarget(
             name: "MySimpleKeychainHelperTests",
-            dependencies: ["MySimpleKeychainHelper"], path: "Tests/MySimpleKeychainHelperTests"
+            dependencies: ["MySimpleKeychainHelper"], 
+            path: "Tests/MySimpleKeychainHelperTests"
         ),
     ]
 )
