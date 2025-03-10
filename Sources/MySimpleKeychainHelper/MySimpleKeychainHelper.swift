@@ -34,7 +34,7 @@ public struct MySimpleKeychainHelper {
             Logger.teamId.info("sharedPrefix: \(sharedPrefix, privacy: .public)")
     }
     
-    @MainActor public func save(service: String, account: String, credential: String, useApiClient: Bool) async -> String {
+    @MainActor public func save(service: String, account: String, credential: String, useApiClient: Bool, comment: String = "") async -> String {
         
         var returnMessage = "keychain save process completed successfully"
         
@@ -57,6 +57,7 @@ public struct MySimpleKeychainHelper {
                                                         kSecAttrService as String: keychainItemName,
                                                         kSecAttrAccessGroup as String: accessGroup,
                                                         kSecUseDataProtectionKeychain as String: true,
+                                                        kSecAttrComment as String: comment,
                                                         kSecAttrAccount as String: account.lowercased(),
                                                         kSecValueData as String: password]
                     
