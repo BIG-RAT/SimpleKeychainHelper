@@ -111,6 +111,8 @@ public struct MySimpleKeychainHelper {
                     Logger.saveCredentials.info("failed to set password for \(keychainItemName, privacy: .public), account \(account, privacy: .public)")
                     returnMessage = "keychain save process was unsuccessful"
                 }
+            } else {
+                returnMessage = "keychain save process was unsuccessful"
             }
             
             print("[Credentials.save] returnMessage:\(returnMessage)")
