@@ -18,18 +18,9 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
 @MainActor var accessGroup                    = ""
 
 @MainActor public final class MySimpleKeychainHelper {
-
-    public static var shared: MySimpleKeychainHelper = {
-        let instance = MySimpleKeychainHelper()
-        instance.configure()
-        return instance
-    }()
-
-    private init() {
-        // Don't call async functions here!
-    }
-
-    public func configure() {
+    
+    @MainActor public static let shared = MySimpleKeychainHelper()
+    /*@MainActor public*/private init() {
         Task {
             let teamId = await fetchTeamId()
             configureAccessGroup(with: teamId)
