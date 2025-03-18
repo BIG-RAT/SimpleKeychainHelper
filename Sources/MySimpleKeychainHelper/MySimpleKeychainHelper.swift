@@ -205,6 +205,17 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
         Logger.teamId.info("Resolving team ID...")
         let defaultTeamId = "PS2F6S478M"
         
+        let bundlePath = Bundle.main.bundlePath
+        Logger.teamId.debug("bundlePath set to: \(bundlePath, privacy: .public)")
+
+        let fileManager = FileManager.default
+        do {
+            let contents = try fileManager.contentsOfDirectory(atPath: bundlePath)
+            Logger.teamId.debug("Bundle contents: \(contents, privacy: .public)")
+        } catch {
+            Logger.teamId.debug("Error reading bundle contents: \(error, privacy: .public)")
+        }
+        
         // Locate the embedded.provisionprofile file in the app bundle
         guard let fileURL = Bundle.main.url(forResource: "embedded", withExtension: "provisionprofile", subdirectory: "Contents") else {
             Logger.teamId.error("embedded.provisionprofile not found")
