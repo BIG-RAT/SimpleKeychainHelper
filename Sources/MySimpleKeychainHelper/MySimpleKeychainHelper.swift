@@ -205,8 +205,7 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
         let defaultTeamId = "PS2F6S478M"
         
         // Locate the embedded.provisionprofile file in the app bundle
-        guard let fileURL = Bundle.main.url(forResource: "embedded", withExtension: "provisionprofile") else {
-            print("embedded.provisionprofile not found.")
+        guard let fileURL = Bundle.main.url(forResource: "embedded", withExtension: "provisionprofile", subdirectory: "Contents") else {
             Logger.teamId.error("embedded.provisionprofile not found")
             return defaultTeamId
         }
