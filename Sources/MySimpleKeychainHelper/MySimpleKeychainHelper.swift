@@ -21,7 +21,7 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
 
     public static var shared: MySimpleKeychainHelper = {
         let instance = MySimpleKeychainHelper()
-        instance.configure()  // Asynchronous setup happens *after* initialization
+        instance.configure()
         return instance
     }()
 
