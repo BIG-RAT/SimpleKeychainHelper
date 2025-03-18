@@ -202,39 +202,39 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
     }
     
     @MainActor func fetchTeamId() async -> String {
+        let defaultTeamId = "PS2F6S478M"
         
-        guard let bundleContents = Bundle.main.resourceURL?.deletingLastPathComponent() else {
-            return "PS2F6S478M"
+        // Locate the embedded.provisionprofile file in the app bundle
+        guard let fileURL = Bundle.main.url(forResource: "embedded", withExtension: "provisionprofile") else {
+            print("embedded.provisionprofile not found.")
+            Logger.teamId.error("embedded.provisionprofile not found")
+            return defaultTeamId
         }
-                
+        
         do {
-            // Read the provisioning profile data
-            let profileData = try Data(contentsOf: bundleContents.appending(component: "embedded.provisionprofile"))
+            // Read the contents of the provision profile
+            let data = try Data(contentsOf: fileURL)
             
-            // Convert the data to a string and extract the plist portion
-            if let profileString = String(data: profileData, encoding: .ascii),
-               let plistStartRange = profileString.range(of: "<?xml"),
-               let plistEndRange = profileString.range(of: "</plist>") {
-                // Extract the plist part of the profile
-                let plistString = String(profileString[plistStartRange.lowerBound..<plistEndRange.upperBound])
-                
-                // Convert plist string back to Data for parsing
-                if let plistData = plistString.data(using: .utf8) {
-                    // Deserialize the plist into a dictionary
-                    if let plist = try PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
-                       let entitlements = plist["Entitlements"] as? [String: Any],
-                       let teamID = entitlements["com.apple.developer.team-identifier"] as? String {
-                        return teamID
-                    }
-                }
+            // Deserialize the plist into a dictionary
+            let propertyList = try PropertyListSerialization.propertyList(from: data, options: [], format: nil)
+            
+            // The result is a dictionary or array depending on the plist structure
+            guard let provisionProfile = propertyList as? [String: Any] else {
+                Logger.teamId.error("The provision profile is not in the expected format")
+                return defaultTeamId
             }
-        } catch {
-            print("Error reading provisioning profile: \(error)")
-        }
             
-        return "PS2F6S478M"
+            if let entitlements = provisionProfile["Entitlements"] as? [String : Any], let teamId = entitlements["com.apple.developer.team-identifier"] as? String {
+                Logger.teamId.info("Found team ID: \(teamId, privacy: .public)")
+                return teamId
+            }
+            
+            return defaultTeamId
+        } catch {
+            Logger.teamId.error("Error reading or parsing the embedded.provisionprofile: \(error, privacy: .public)")
+            return defaultTeamId
+        }
     }
-
 }
 
 private extension Logger {
