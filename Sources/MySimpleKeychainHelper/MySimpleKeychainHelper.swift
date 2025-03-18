@@ -17,21 +17,31 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
 @MainActor var sharedPrefix                   = ""
 @MainActor var accessGroup                    = ""
 
-public struct MySimpleKeychainHelper {
+@MainActor public final class MySimpleKeychainHelper {
+
+    public static var shared: MySimpleKeychainHelper = {
+        let instance = MySimpleKeychainHelper()
+        instance.configure()  // Asynchronous setup happens *after* initialization
+        return instance
+    }()
+
+    private init() {
+        // Don't call async functions here!
+    }
+
+    public func configure() {
+        Task {
+            let teamId = await fetchTeamId()
+            configureAccessGroup(with: teamId)
+        }
+    }
     
-    @MainActor public static let shared = MySimpleKeychainHelper()
-    @MainActor public init() {
-            let teamId = fetchTeamId()
-            Logger.teamId.info("found team id: \(teamId, privacy: .public)")
-            if teamId == "PS2F6S478M" {
-                accessGroup = "\(teamId).jamfie.SharedJPMA"
-                sharedPrefix = "JPMA"
-            } else {
-                accessGroup = "\(teamId).jamfie.SharedJSK"
-                sharedPrefix = "JSK"
-            }
-            Logger.teamId.info("access group: \(accessGroup, privacy: .public)")
-            Logger.teamId.info("sharedPrefix: \(sharedPrefix, privacy: .public)")
+    @MainActor private func configureAccessGroup(with teamId: String) {
+        Logger.teamId.info("found team id: \(teamId, privacy: .public)")
+        accessGroup = "\(teamId).jamfie.Shared\(teamId == "PS2F6S478M" ? "JPMA" : "JSK")"
+        sharedPrefix = teamId == "PS2F6S478M" ? "JPMA" : "JSK"
+        Logger.teamId.info("access group: \(accessGroup, privacy: .public)")
+        Logger.teamId.info("sharedPrefix: \(sharedPrefix, privacy: .public)")
     }
     
     @MainActor public func save(service: String, account: String, credential: String, useApiClient: Bool, comment: String = "") async -> String {
@@ -200,39 +210,66 @@ public struct MySimpleKeychainHelper {
         return status == errSecSuccess
     }
     
-    func fetchTeamId() -> String {
-
+    @MainActor func fetchTeamId() async -> String {
+        let defaultTeamId = "PS2F6S478M"
+        
         guard let bundleContents = Bundle.main.resourceURL?.deletingLastPathComponent() else {
-            return "PS2F6S478M"
+            Logger.teamId.error("Failed to locate the app bundle directory.")
+            return defaultTeamId
         }
-                
+
+        let profilePath = bundleContents.appendingPathComponent("embedded.provisionprofile")
+        
         do {
-            // Read the provisioning profile data
-            let profileData = try Data(contentsOf: bundleContents.appending(component: "embedded.provisionprofile"))
-            
-            // Convert the data to a string and extract the plist portion
-            if let profileString = String(data: profileData, encoding: .ascii),
-               let plistStartRange = profileString.range(of: "<?xml"),
-               let plistEndRange = profileString.range(of: "</plist>") {
-                // Extract the plist part of the profile
-                let plistString = String(profileString[plistStartRange.lowerBound..<plistEndRange.upperBound])
-                
-                // Convert plist string back to Data for parsing
-                if let plistData = plistString.data(using: .utf8) {
-                    // Deserialize the plist into a dictionary
-                    if let plist = try PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
-                       let entitlements = plist["Entitlements"] as? [String: Any],
-                       let teamID = entitlements["com.apple.developer.team-identifier"] as? String {
-                        return teamID
-                    }
-                }
+            // Ensure file exists before reading
+            guard FileManager.default.fileExists(atPath: profilePath.path) else {
+                Logger.teamId.error("Provisioning profile not found at \(profilePath.path, privacy: .public)")
+                return defaultTeamId
             }
-        } catch {
-            print("Error reading provisioning profile: \(error)")
-        }
+
+            // Perform file read asynchronously
+            let profileData = try await Task.detached {
+                return try Data(contentsOf: profilePath)
+            }.value
+
+            // Convert to a string and extract plist portion
+            guard let profileString = String(data: profileData, encoding: .ascii) else {
+                Logger.teamId.error("Failed to convert provisioning profile data to a string.")
+                return defaultTeamId
+            }
+
+            guard let plistStartRange = profileString.range(of: "<?xml"),
+                  let plistEndRange = profileString.range(of: "</plist>") else {
+                Logger.teamId.error("Could not find valid XML plist structure in provisioning profile.")
+                return defaultTeamId
+            }
+
+            // Extract the plist part of the profile
+            let plistString = String(profileString[plistStartRange.lowerBound..<plistEndRange.upperBound])
             
-        return "PS2F6S478M"
+            // Convert plist string back to Data for parsing
+            guard let plistData = plistString.data(using: .utf8) else {
+                Logger.teamId.error("Failed to convert extracted plist string to Data.")
+                return defaultTeamId
+            }
+
+            // Deserialize the plist into a dictionary
+            if let plist = try PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
+               let entitlements = plist["Entitlements"] as? [String: Any],
+               let teamID = entitlements["com.apple.developer.team-identifier"] as? String {
+                Logger.teamId.info("Successfully retrieved Team ID: \(teamID, privacy: .public)")
+                return teamID
+            } else {
+                Logger.teamId.error("Team ID not found in provisioning profile entitlements.")
+            }
+
+        } catch {
+            Logger.teamId.error("Error reading provisioning profile: \(error.localizedDescription, privacy: .public)")
+        }
+
+        return defaultTeamId
     }
+
 }
 
 private extension Logger {
