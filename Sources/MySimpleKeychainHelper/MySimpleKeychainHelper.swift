@@ -28,7 +28,7 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
     }
     
     @MainActor private func configureAccessGroup(with teamId: String) {
-        Logger.teamId.info("found team id: \(teamId, privacy: .public)")
+//        Logger.teamId.info("found team id: \(teamId, privacy: .public)")
         accessGroup = "\(teamId).jamfie.Shared\(teamId == "PS2F6S478M" ? "JPMA" : "JSK")"
         sharedPrefix = teamId == "PS2F6S478M" ? "JPMA" : "JSK"
         Logger.teamId.info("access group: \(accessGroup, privacy: .public)")
@@ -202,6 +202,7 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
     }
     
     @MainActor func fetchTeamId() async -> String {
+        Logger.teamId.info("Resolving team ID...")
         let defaultTeamId = "PS2F6S478M"
         
         // Locate the embedded.provisionprofile file in the app bundle
