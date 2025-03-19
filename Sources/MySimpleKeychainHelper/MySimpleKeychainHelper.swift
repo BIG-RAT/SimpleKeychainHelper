@@ -205,72 +205,13 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
         Logger.teamId.info("Resolving team ID...")
         let defaultTeamId = "PS2F6S478M"
         
-        let bundlePath = Bundle.main.bundlePath
-        Logger.teamId.debug("bundlePath set to: \(bundlePath, privacy: .public)")
-        let bundleContentsPath = bundlePath + "/Contents"
-        Logger.teamId.debug("bundleContentsPath set to: \(bundleContentsPath, privacy: .public)")
-
-        let fileManager = FileManager.default
-        do {
-            let contents = try fileManager.contentsOfDirectory(atPath: bundlePath)
-            Logger.teamId.debug("Bundle contents: \(contents, privacy: .public)")
-        } catch {
-            Logger.teamId.debug("Error reading bundle contents: \(error, privacy: .public)")
+        if let teamID = Bundle.main.object(forInfoDictionaryKey: "TeamID") as? String {
+            Logger.teamId.info("found team ID: \(teamID, privacy: .public)")
+            return teamID
         }
-        do {
-            let contents = try fileManager.contentsOfDirectory(atPath: bundleContentsPath)
-            Logger.teamId.debug("Bundle Contents contents: \(contents, privacy: .public)")
-        } catch {
-            Logger.teamId.debug("Error reading bundle Contents ontents: \(error, privacy: .public)")
-        }
-
-        let filePath = bundlePath + "/Contents/embedded.provisionprofile"
-        let fileUrl = URL(fileURLWithPath: filePath)
         
-        if !FileManager.default.fileExists(atPath: filePath) {
-            Logger.teamId.error("embedded.provisionprofile not found at \(filePath)")
-            return defaultTeamId
-        }
-        // Locate the embedded.provisionprofile file in the app bundle
-//        guard let fileURL = Bundle.main.url(forResource: "embedded", withExtension: "provisionprofile", subdirectory: "Contents") else {
-//            Logger.teamId.error("embedded.provisionprofile not found")
-//            return defaultTeamId
-//        }
-        
-        do {
-            // Read the contents of the provision profile
-            let profileData = try Data(contentsOf: fileUrl)
-            
-            // Convert the data to a string and extract the plist portion
-            if let profileString = String(data: profileData, encoding: .ascii),
-               let plistStartRange = profileString.range(of: "<?xml"),
-               let plistEndRange = profileString.range(of: "</plist>") {
-                // Extract the plist part of the profile
-                let plistString = String(profileString[plistStartRange.lowerBound..<plistEndRange.upperBound])
-                
-                // Convert plist string back to Data for parsing
-                if let plistData = plistString.data(using: .utf8) {
-                    // Deserialize the plist into a dictionary
-                    if let plist = try PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
-                       let entitlements = plist["Entitlements"] as? [String: Any],
-                       let teamID = entitlements["com.apple.developer.team-identifier"] as? String {
-                        return teamID
-                    } else {
-                        Logger.teamId.error("Error convewrting data to plist")
-                        return defaultTeamId
-                    }
-                } else {
-                    Logger.teamId.error("Error convewrting plist string to Data")
-                    return defaultTeamId
-                }
-            } else {
-                Logger.teamId.error("Error extracting xml from embedded.provisionprofile")
-                return defaultTeamId
-            }
-        } catch {
-            Logger.teamId.error("Error reading or parsing the embedded.provisionprofile: \(error, privacy: .public)")
-            return defaultTeamId
-        }
+        Logger.teamId.info("could not find team ID, returning default: \(defaultTeamId, privacy: .public)")
+        return defaultTeamId
     }
 }
 
