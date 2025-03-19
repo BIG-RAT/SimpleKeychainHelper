@@ -207,6 +207,8 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
         
         let bundlePath = Bundle.main.bundlePath
         Logger.teamId.debug("bundlePath set to: \(bundlePath, privacy: .public)")
+        let bundleContentsPath = bundlePath + "/Contents"
+        Logger.teamId.debug("bundleContentsPath set to: \(bundleContentsPath, privacy: .public)")
 
         let fileManager = FileManager.default
         do {
@@ -215,16 +217,29 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
         } catch {
             Logger.teamId.debug("Error reading bundle contents: \(error, privacy: .public)")
         }
+        do {
+            let contents = try fileManager.contentsOfDirectory(atPath: bundleContentsPath)
+            Logger.teamId.debug("Bundle Contents contents: \(contents, privacy: .public)")
+        } catch {
+            Logger.teamId.debug("Error reading bundle Contents ontents: \(error, privacy: .public)")
+        }
+
+        let filePath = bundlePath + "/Contents/embedded.provisionprofile"
+        let fileUrl = URL(fileURLWithPath: filePath)
         
-        // Locate the embedded.provisionprofile file in the app bundle
-        guard let fileURL = Bundle.main.url(forResource: "embedded", withExtension: "provisionprofile", subdirectory: "Contents") else {
-            Logger.teamId.error("embedded.provisionprofile not found")
+        if !FileManager.default.fileExists(atPath: filePath) {
+            Logger.teamId.error("embedded.provisionprofile not found at \(filePath)")
             return defaultTeamId
         }
+        // Locate the embedded.provisionprofile file in the app bundle
+//        guard let fileURL = Bundle.main.url(forResource: "embedded", withExtension: "provisionprofile", subdirectory: "Contents") else {
+//            Logger.teamId.error("embedded.provisionprofile not found")
+//            return defaultTeamId
+//        }
         
         do {
             // Read the contents of the provision profile
-            let data = try Data(contentsOf: fileURL)
+            let data = try Data(contentsOf: fileUrl)
             
             // Deserialize the plist into a dictionary
             let propertyList = try PropertyListSerialization.propertyList(from: data, options: [], format: nil)
