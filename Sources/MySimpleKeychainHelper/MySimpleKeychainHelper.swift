@@ -20,11 +20,11 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
 @MainActor public final class MySimpleKeychainHelper {
     
     @MainActor public static let shared = MySimpleKeychainHelper()
-    /*@MainActor public*/private init() {
-        Task {
-            let teamId = await fetchTeamId()
+    private init() {
+//        Task {
+            let teamId = fetchTeamId()
             configureAccessGroup(with: teamId)
-        }
+//        }
     }
     
     @MainActor private func configureAccessGroup(with teamId: String) {
@@ -201,7 +201,7 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
         return status == errSecSuccess
     }
     
-    @MainActor func fetchTeamId() async -> String {
+    @MainActor func fetchTeamId() -> String {
         Logger.teamId.info("Resolving team ID...")
         let defaultTeamId = "PS2F6S478M"
         
@@ -212,7 +212,7 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
         
         // Construct the path to embedded.provisionprofile inside the app bundle
         let fileUrl = "\(bundlePath)/Contents/embedded.provisionprofile"
-        Logger.teamId.debug("embedded.provisionprofile path: \(fileUrl)")
+        Logger.teamId.debug("embedded.provisionprofile path: \(fileUrl, privacy: .public)")
         
         // Check if the file exists at the specified path
         if !FileManager.default.fileExists(atPath: fileUrl) {
