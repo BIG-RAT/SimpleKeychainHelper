@@ -205,13 +205,64 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
         Logger.teamId.info("Resolving team ID...")
         let defaultTeamId = "PS2F6S478M"
         
-        if let teamID = Bundle.main.object(forInfoDictionaryKey: "TeamID") as? String {
-            Logger.teamId.info("found team ID: \(teamID, privacy: .public)")
-            return teamID
+        guard let bundlePath = Bundle.main.bundlePath as? String else {
+            print("Failed to retrieve app bundle path.")
+            return defaultTeamId
         }
         
-        Logger.teamId.info("could not find team ID, returning default: \(defaultTeamId, privacy: .public)")
+        // Construct the path to embedded.provisionprofile inside the app bundle
+        let fileUrl = "\(bundlePath)/Contents/embedded.provisionprofile"
+        Logger.teamId.debug("embedded.provisionprofile path: \(fileUrl)")
+        
+        // Check if the file exists at the specified path
+        if !FileManager.default.fileExists(atPath: fileUrl) {
+            Logger.teamId.error("embedded.provisionprofile was not found in the app bundle")
+            return defaultTeamId
+        }
+        
+        if let provisionProfile = readRawDataFromProvisioningProfile(from: fileUrl) {
+            if let entitlements = provisionProfile["Entitlements"] as? [String : Any], let teamId = entitlements["com.apple.developer.team-identifier"] as? String {
+                Logger.teamId.info("found team ID: \(teamId, privacy: .public)")
+                return teamId
+            }
+        }
+        Logger.teamId.info("unable to local team id")
         return defaultTeamId
+    }
+    
+    private func readRawDataFromProvisioningProfile(from path: String) -> [String: Any]? {
+        let profileString = try? NSString.init(contentsOfFile: path,
+                                               encoding: String.Encoding.isoLatin1.rawValue)
+        
+        let xmlString = profileString as? String ?? ""
+        // Attempt to extract the embedded plist section from XML
+         let plistTagStart = "<plist version=\"1.0\">"
+         let plistTagEnd = "</plist>"
+         
+         if let plistStartRange = xmlString.range(of: plistTagStart),
+            let plistEndRange = xmlString.range(of: plistTagEnd) {
+             
+             // Extract the plist XML substring
+             let plistString = xmlString[plistStartRange.upperBound..<plistEndRange.lowerBound]
+             
+             // Convert the extracted plist string to Data
+             guard let plistData = plistString.data(using: .utf8) else {
+                 Logger.teamId.error("Failed to convert plist string to data")
+                 return nil
+             }
+             
+             // Try parsing the plist data as a property list
+             if let plist = try? PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any] {
+                 return plist
+             } else {
+                 Logger.teamId.error("Failed to parse plist data.")
+                 return nil
+             }
+         } else {
+             Logger.teamId.error("Failed to find plist section in provisioning profile.")
+             return nil
+         }
+
     }
 }
 
