@@ -239,23 +239,34 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
         
         do {
             // Read the contents of the provision profile
-            let data = try Data(contentsOf: fileUrl)
+            let profileData = try Data(contentsOf: fileUrl)
             
-            // Deserialize the plist into a dictionary
-            let propertyList = try PropertyListSerialization.propertyList(from: data, options: [], format: nil)
-            
-            // The result is a dictionary or array depending on the plist structure
-            guard let provisionProfile = propertyList as? [String: Any] else {
-                Logger.teamId.error("The provision profile is not in the expected format")
+            // Convert the data to a string and extract the plist portion
+            if let profileString = String(data: profileData, encoding: .ascii),
+               let plistStartRange = profileString.range(of: "<?xml"),
+               let plistEndRange = profileString.range(of: "</plist>") {
+                // Extract the plist part of the profile
+                let plistString = String(profileString[plistStartRange.lowerBound..<plistEndRange.upperBound])
+                
+                // Convert plist string back to Data for parsing
+                if let plistData = plistString.data(using: .utf8) {
+                    // Deserialize the plist into a dictionary
+                    if let plist = try PropertyListSerialization.propertyList(from: plistData, options: [], format: nil) as? [String: Any],
+                       let entitlements = plist["Entitlements"] as? [String: Any],
+                       let teamID = entitlements["com.apple.developer.team-identifier"] as? String {
+                        return teamID
+                    } else {
+                        Logger.teamId.error("Error convewrting data to plist")
+                        return defaultTeamId
+                    }
+                } else {
+                    Logger.teamId.error("Error convewrting plist string to Data")
+                    return defaultTeamId
+                }
+            } else {
+                Logger.teamId.error("Error extracting xml from embedded.provisionprofile")
                 return defaultTeamId
             }
-            
-            if let entitlements = provisionProfile["Entitlements"] as? [String : Any], let teamId = entitlements["com.apple.developer.team-identifier"] as? String {
-                Logger.teamId.info("Found team ID: \(teamId, privacy: .public)")
-                return teamId
-            }
-            
-            return defaultTeamId
         } catch {
             Logger.teamId.error("Error reading or parsing the embedded.provisionprofile: \(error, privacy: .public)")
             return defaultTeamId
