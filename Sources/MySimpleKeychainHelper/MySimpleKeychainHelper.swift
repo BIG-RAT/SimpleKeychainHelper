@@ -140,7 +140,6 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
         keychainResult = itemLookup(service: keychainItemName)
         
         if keychainResult.count > 1 && !account.isEmpty {
-            
             for (username, password) in keychainResult {
                 if username.lowercased() == account.lowercased() {
                     Logger.retrieveCredentials.info("found password/secret for: \(account, privacy: .public)")
@@ -148,7 +147,9 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
                 }
             }
         }
-        
+        if keychainResult.count == 0 {
+            Logger.retrieveCredentials.info("no password/secret found for: \(service, privacy: .public)")
+        }
         return keychainResult
     }
     
