@@ -4,7 +4,7 @@
 
 
 import Foundation
-import os.log
+import OSLog
 import Security
 
 //log stream --info --predicate 'subsystem == "<app.bundle.id>"'
