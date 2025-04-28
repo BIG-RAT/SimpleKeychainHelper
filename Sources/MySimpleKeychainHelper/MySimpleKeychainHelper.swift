@@ -187,7 +187,7 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
         return userPassDict
     }
     
-    @MainActor private func delete(service: String, account: String) -> Bool {
+    @MainActor public func delete(service: String, account: String) -> Bool {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
