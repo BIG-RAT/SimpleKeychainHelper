@@ -21,10 +21,8 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
     
     @MainActor public static let shared = MySimpleKeychainHelper()
     private init() {
-//        Task {
-            let teamId = fetchTeamId()
-            configureAccessGroup(with: teamId)
-//        }
+        let teamId = fetchTeamId()
+        configureAccessGroup(with: teamId)
     }
     
     @MainActor private func configureAccessGroup(with teamId: String) {
@@ -189,7 +187,7 @@ let prefix                                    = Bundle.main.infoDictionary?["CFB
         return userPassDict
     }
     
-    @MainActor func delete(service: String, account: String) -> Bool {
+    @MainActor func public delete(service: String, account: String) -> Bool {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
